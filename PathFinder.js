@@ -33,10 +33,10 @@ class PathFinder
 
 	sortNodes(a, b)
 	{
-		if (a.H == b.H) {
+		if (a.F == b.F) {
 			return 0;
 		}
-		else if(a.H < b.H)
+		else if(a.F < b.F)
 		{
 			return -1;
 		}
