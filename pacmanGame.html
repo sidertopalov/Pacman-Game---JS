@@ -452,95 +452,104 @@
             var endLocation = new Phaser.Point(pacmanLocation.y, pacmanLocation.x);
             var searchParameters = new SearchParameters(startLocation, endLocation, newMap);
             var pathFinder = new PathFinder(searchParameters);
-            // paths = pathFinder.FindPath();
 
+            var timeNow = game.time.time;
+            if (timeNow > timeJump) {
+                timeJump = timeNow + 1000;
+            }
 
-            // var timeNow = game.time.time;
-            // if (timeNow > timeJump) {
-            //     paths = pathFinder.FindPath();
-            //     blinky.body.velocity.x = 0;
-            //     blinky.body.velocity.y = 0;
-            //     timeJump = timeNow + 500;
-            //     step = 0;
-            // }
-                    blinky.body.velocity.x = 0;
-                    blinky.body.velocity.y = 0;
+            var tileX = (paths[step].y * 16) + 8;
+            var tileY = (paths[step].x * 16) + 8;
+            var blinkyX = blinky.x;
+            var blinkyY = blinky.y;
+            var absX = Math.abs(tileX - blinkyX);
+            var absY = Math.abs(tileY - blinkyY);
 
-                var tileX = (paths[0].y * 16) + 8;
-                var tileY = (paths[0].x * 16) + 8;
-                var blinkyX = blinky.x;
-                var blinkyY = blinky.y;
-                var absX = Math.abs(tileX - blinkyX);
-                var absY = Math.abs(tileY - blinkyY);
-
-                // console.log("TileX: " + tileX,"TileY: " + tileY, 
-                //         "BlinkyX: " + blinkyX,"BlinkyY: " + blinkyY,
-                //         "PacmanX: " + pacman.x,"PacmanY: " + pacman.y,
-                //         "AbsX: " + Math.abs(tileX - blinkyX), "AbsY: " + Math.abs(tileY - blinkyY));
-                if(game.physics.arcade.moveToXY(blinky, tileX, tileY))
+            var check = (pacman.x == pacmanPrevX) || (pacman.y == pacmanPrevY);
+            if ( check ) 
+            {
+                if ( absX < 1.0 && absY < 1.0 )
                 {
-                    if (paths.length - 1 > 0) {
-                        console.log("Befor: " + tileX, tileY);
-                        paths.splice(0, 1);
-                        tileX = (paths[0].y * 16) + 8;
-                        tileY = (paths[0].x * 16) + 8;
-                        game.physics.arcade.moveToXY(blinky, tileX, tileY);
-                        console.log("After: " + tileX, tileY);
+                    if ( (paths.length - 1 > 1) && (step < paths.length - 1) ) {
+                        paths.shift();
+                        step++;
+                        if (step  == paths.length ) { step = paths.length - 1; }
+                        console.log(paths.length);
+                        console.log(step);
+                    }
+                    else
+                    {
+                        pacmanPrevX = pacman.x;
+                        pacmanPrevY = pacman.y;
+                        paths = pathFinder.FindPath();
+                        step = 0;
                     }
                 }
-
-
-                // if ( tileX <= blinkyX && absY <= 1 )  // left
-                // {
-                //     blinky.body.velocity.x -= 50;
-                //     // step++;
-                // }
-                // else if ( tileX >= blinkyX && absY <= 1 ) // right
-                // {
-                //     blinky.body.velocity.x += 50;
-                //     // step++;
-                // }
-                // else if ( absX <= 1 && tileY <= blinkyY ) // UP
-                // {
-                //     blinky.body.velocity.y -= 50;
-                //     // step++;
-                // }
-                // else if ( absX <= 1 && tileY >= blinkyY ) // Down
-                // {
-                //     blinky.body.velocity.y += 50;
-                //     // step++;
-                // }
-                // if (absX >= 0.0 && absX <= 2 && absY >= 0.0 && absY <= 2 )
-                // {
-                    paths = pathFinder.FindPath();
-                // }
-
-                // console.log(paths);
-                // console.log( (absX > 2.0 && absY > 2.0) && (absX < 3.5 && absY < 3.5) );
-                // var checkAbsX = (absX > 2.0 && absX <= 3.5);
-                // var checkAbsY = (absY > 2.0 && absY <= 3.5);
-
-                // if ( (pacmanPrevX == pacman.x && pacmanPrevY == pacman.y) && checkAbsX && checkAbsY )  
-                // {
-
-                //     paths.splice(0, 1);
-                //     console.log(paths, pacmanPrevX, pacmanPrevY);
-                // }
-
+            }
+            else 
+            {
                 pacmanPrevX = pacman.x;
                 pacmanPrevY = pacman.y;
+                paths = pathFinder.FindPath();
+                step = 0;
+                console.log(paths);
 
-                // if (step > paths.length - 1 || step == 3) 
-                // {
-                //     paths = pathFinder.FindPath();
-                //     step = 0;
-                //     blinky.body.velocity.x = 0;
-                //     blinky.body.velocity.y = 0;
-                // }
-                // else
-                // {
-                //     step++;
-                // }
+            }
+
+            game.physics.arcade.moveToXY(blinky, tileX, tileY);
+
+            // var tileX = (paths[step].y * 16) + 8;
+            // var tileY = (paths[step].x * 16) + 8;
+            // var blinkyX = blinky.x;
+            // var blinkyY = blinky.y;
+            // var absX = Math.abs(tileX - blinkyX);
+            // var absY = Math.abs(tileY - blinkyY);
+
+            // game.physics.arcade.moveToXY(blinky, tileX, tileY);
+
+            // console.log("TileX: " + tileX,"TileY: " + tileY, 
+            //         "BlinkyX: " + blinkyX,"BlinkyY: " + blinkyY,
+            //         "PacmanX: " + pacman.x,"PacmanY: " + pacman.y,
+            //         "AbsX: " + Math.abs(tileX - blinkyX), "AbsY: " + Math.abs(tileY - blinkyY));
+
+            // if(game.physics.arcade.moveToXY(blinky, tileX, tileY))
+            // {
+            //     if (paths.length - 1 > 0) {
+            //         console.log("Befor: " + tileX, tileY);
+            //         paths.splice(0, 1);
+            //         tileX = (paths[0].y * 16) + 8;
+            //         tileY = (paths[0].x * 16) + 8;
+            //         game.physics.arcade.moveToXY(blinky, tileX, tileY);
+            //         console.log("After: " + tileX, tileY);
+            //     }
+            // }
+
+
+            // if ( tileX <= blinkyX && absY <= 1 )  // left
+            // {
+            //     blinky.body.velocity.x -= 50;
+            //     // step++;
+            // }
+            // else if ( tileX >= blinkyX && absY <= 1 ) // right
+            // {
+            //     blinky.body.velocity.x += 50;
+            //     // step++;
+            // }
+            // else if ( absX <= 1 && tileY <= blinkyY ) // UP
+            // {
+            //     blinky.body.velocity.y -= 50;
+            //     // step++;
+            // }
+            // else if ( absX <= 1 && tileY >= blinkyY ) // Down
+            // {
+            //     blinky.body.velocity.y += 50;
+            //     // step++;
+            // }
+            // if (absX >= 0.0 && absX <= 2 && absY >= 0.0 && absY <= 2 )
+            // {
+            //     paths = pathFinder.FindPath();
+            // }
+
 
             // var timeNow = game.time.time;
             // if (timeNow > timeJump) {
