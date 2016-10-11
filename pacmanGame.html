@@ -32,72 +32,78 @@
 
         class pacmanGhosts {
 
-            constructor (obj, currentMove, lastMove) {
-                this.obj = obj;
-                this.currentMove = currentMove;
-                this.lastMove = lastMove;
-            }
-            moveGhost(dir) {
-                
-                this.dir = dir;
-                // console.log(this.dir);
-                if (this.currentMove === Phaser.LEFT) {
-                    this.obj.body.velocity.x -= 50;
-                }
-                else if (this.currentMove === Phaser.RIGHT) {
-                    this.obj.body.velocity.x += 50;
-                }
-                else if (this.currentMove === Phaser.UP) {
-                    this.obj.body.velocity.y -= 50;
-                }
-                else if (this.currentMove === Phaser.DOWN) {
-                    this.obj.body.velocity.y += 50;
-                }
-                this.lastMove = this.currentMove;
-                this.currentMove = dir;
-                // console.log(dir);
+            constructor (ghost, paths, pacmanPrevLoc) {
+                this.ghost = ghost;
+                this.paths = paths;
+                this.pacmanPrevLoc = pacmanPrevLoc;
             }
 
-            checkDir(){
-                var randomNum = game.rnd.integerInRange(1,1000);
-                // console.log(this.direc);
-                if (randomNum >= 1 && randomNum <= 250 && this.lastMove != Phaser.LEFT) 
-                {   
-                    // this.wrong = Phaser.LEFT;
-                    this.moveGhost(Phaser.LEFT);
-                } 
-                else if (randomNum >= 251 && randomNum <= 500 && this.lastMove != Phaser.RIGHT)
+            moveGhost(pacman, map, ghostLocation, pacmanLocation, speed) 
+            {
+                console.log(pacmanLocation);
+                var startLocation = new Phaser.Point(ghostLocation.y, ghostLocation.x);
+                var endLocation = new Phaser.Point(pacmanLocation.y, pacmanLocation.x);
+                var searchParameters = new SearchParameters(startLocation, endLocation, map);
+                var pathFinder = new PathFinder(searchParameters);
+                // this.paths = pathFinder.FindPath();
+                // console.log(this.paths);
+                var tileX = (this.paths[0].y * 16) + 8;
+                var tileY = (this.paths[0].x * 16) + 8;
+                var ghostX = this.ghost.x;
+                var ghostY = this.ghost.y;
+                var absX = Math.abs(tileX - ghostX);
+                var absY = Math.abs(tileY - ghostY);
+                
+                // console.log("TileX: " + tileX,"TileY: " + tileY, 
+                //     "BlinkyX: " + ghostX,"BlinkyY: " + ghostY,
+                //     "PacmanX: " + pacman.x,"PacmanY: " + pacman.y,
+                //     "AbsX: " + Math.abs(tileX - ghostX), "AbsY: " + Math.abs(tileY - ghostY));
+
+                if (tileX < ghostX) {
+                    this.ghost.animations.play('left', 5, true);
+                }
+                else 
                 {
-                    // this.wrong = Phaser.RIGHT;
-                    this.moveGhost(Phaser.RIGHT);
+                    this.ghost.animations.play('right', 5, true);
                 }
-                else if (randomNum >= 501 && randomNum <= 750 && this.lastMove != Phaser.UP ) 
+                var check = ( pacman.x == this.pacmanPrevLoc.x ) || ( pacman.y == this.pacmanPrevLoc.y );
+                if ( check ) 
                 {
-                    // this.wrong = Phaser.UP;
-                    this.moveGhost(Phaser.UP);
+                    if ( absX < 1.0 && absY < 1.0 )
+                    {
+                        if ( (this.paths.length - 1 > 1) && ( 0 < this.paths.length - 1) ) {
+                            this.paths.shift();
+                        }
+                        else
+                        {
+                            this.pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
+                            this.paths = pathFinder.FindPath();
+                        }
+                    }
                 }
-                else if (randomNum >= 751 && this.lastMove != Phaser.DOWN) 
+                else 
                 {
-                    // this.wrong = Phaser.DOWN;
-                    this.moveGhost(Phaser.DOWN);
+                    this.pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
+                    this.paths = pathFinder.FindPath();
+
                 }
-                else {
-                    this.checkDir();
-                }
+                game.physics.arcade.moveToXY(this.ghost, tileX, tileY, speed);
             }
+
         }
 
         var game = new Phaser.Game(448, 496, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
 
         function preload() {
             game.load.tilemap('map', 'assets/pacman-map.json', null, Phaser.Tilemap.TILED_JSON);
-            game.load.image('dot', 'assets/dot.png');
-            game.load.image('tiles', 'assets/pacman-tiles.png');
-            game.load.spritesheet('pacman', 'assets/pacman.png', 32, 32);
-            game.load.spritesheet('redGhost', 'assets/red.png', 39, 40, 8, null, 1);
-            game.load.spritesheet('greenGhost', 'assets/red.png', 39, 40, 8, null, 1);
-            game.load.spritesheet('yellowGhost', 'assets/red.png', 39, 40, 8, null, 1);
-            game.load.spritesheet('pinkyGhost', 'assets/red.png', 39, 40, 8, null, 1);
+            game.load.image('dot', 'assets/dotRed.png');
+            // game.load.image('tiles', 'assets/pacman-tiles.png');
+            game.load.image('tiles', 'assets/map2.png');
+            game.load.spritesheet('pacman', 'assets/king.png', 32, 32);
+            game.load.spritesheet('red', 'assets/redSeal.png', 32, 32);
+            game.load.spritesheet('green', 'assets/greenSeal.png', 32, 32);
+            game.load.spritesheet('yellowGhost', 'assets/graySeal.png', 32, 32);
+            game.load.spritesheet('pinkyGhost', 'assets/brownSeal.png', 32, 32);
 
             game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
             game.scale.pageAlignHorizontally = true;
@@ -113,7 +119,7 @@
         var safetile = 14;
         var gridsize = 16;
 
-        var speed = 70;
+        var speed = 120;
         var threshold = 3;
 
         var marker = new Phaser.Point();
@@ -145,16 +151,22 @@
         var pinky;
         var pinkyInst;
 
-        var timeJump = 0;
         var flag =  true;
-        var paths;
+
+        var blinkyPaths;
+        var greenPaths;
         var blinkyLocation;
         var pacmanLocation;
+        var yellowLocation;
+        var pinkyLocation;
+
+        var pacmanPrevLoc;
         var newMap;
 
         var step = 0;
         var pacmanPrevX;
         var pacmanPrevY;
+        var timeJump = 0;
 
 
         function create() {
@@ -163,7 +175,7 @@
             map.addTilesetImage('pacman-tiles', 'tiles');
             // console.log(map);
             layer = map.createLayer('Pacman');
-            layer.debug = 1;
+            // layer.debug = 1;
 
             dots = game.add.physicsGroup();
 
@@ -173,79 +185,125 @@
             dots.setAll('y', 6, false, false, 1);
 
             map.setCollisionByExclusion([safetile], true, layer);
+
             // Pacman settings
-            pacman = game.add.sprite((23 * 16) + 8, (26 * 16) + 8, 'pacman', 0);
+            pacman = game.add.sprite((14 * 16) + 8, (17 * 16) + 8, 'pacman', 0);
             pacman.anchor.set(0.5);
-            pacman.animations.add('munch', [0, 1, 2, 1], 20, true);
+            pacman.animations.add('kinguinLeft', [0], 10, true);
+            pacman.animations.add('kinguinUpDown', [1], 10, true);
+            pacman.animations.add('kinguinRight', [2], 10, true);
 
             game.physics.arcade.enable(pacman);
             pacman.body.setSize(16, 16, 8, 8);
 
             cursors = game.input.keyboard.createCursorKeys();
 
-            levelText = game.add.text(1, 165, 'Level: 1', {fontSize: '14px', fill: '#FDCC91'});
-            scoreText = game.add.text(0, 185, 'Score: 0', {fontSize: '14px', fill: '#FFB700'});
-            pacmanLifeText = game.add.text(370, 165, 'Life: 3', {fontSize: '14px', fill: '#FDCC91'});
+            levelText = game.add.text(1, 165, 'Level: 1', {fontSize: '14px', fill: 'black'});
+            scoreText = game.add.text(0, 185, 'Score: 0', {fontSize: '14px', fill: 'black'});
+            pacmanLifeText = game.add.text(370, 165, 'Life: 3', {fontSize: '14px', fill: 'black'});
 
             //Ghosts settings
-            blinky = game.add.sprite((25 * 16) + 8, (26 * 16) + 8, 'redGhost');
-            // green = game.add.sprite(448/2 - 40, 496/2-62, 'greenGhost');
-            // yellow = game.add.sprite(448/2 + 40, 496/2-62, 'yellowGhost');
-            // pinky = game.add.sprite(27, 27, 'pinkyGhost');
+            blinky = game.add.sprite((14 * 16) + 8, (11 * 16) + 8, 'red');
+            green = game.add.sprite((11.6 * 16) + 8, (14.5 * 16) + 8, 'green');
+            yellow = game.add.sprite((13.6 * 16) + 8, (14.5 * 16) + 8, 'yellowGhost');
+            pinky = game.add.sprite((15.6 * 16) + 8, (14.5 * 16) + 8, 'pinkyGhost');
 
             blinky.anchor.set(0.5);
-            // green.anchor.set(0.5);
-            // yellow.anchor.set(0.5);
-            // pinky.anchor.set(0.5);
+            green.anchor.set(0.5);
+            yellow.anchor.set(0.5);
+            pinky.anchor.set(0.5);
 
-            blinky.animations.add('blinky', [0, 1, 2, 3, 4, 5], 20, true);
-            // green.animations.add('green', [0, 1, 2, 3, 4, 5, 6], 10, true);
-            // yellow.animations.add('yellow', [0, 1, 2, 3, 4, 5, 6], 10, true);
-            // pinky.animations.add('pinky', [0, 1, 2, 3, 4, 5, 6], 10, true);
+            blinky.animations.add('left', [0, 1], 10, true);
+            blinky.animations.add('right', [2, 3], 10, true);
+
+            green.animations.add('left', [0, 1], 10, true);
+            green.animations.add('right', [2, 3], 10, true);
+
+            yellow.animations.add('left', [0, 1], 10, true);
+            yellow.animations.add('right', [2, 3], 10, true);
+
+            pinky.animations.add('left', [0, 1], 10, true);
+            pinky.animations.add('right', [2, 3], 10, true);
 
             game.physics.arcade.enable(blinky);
-            // game.physics.arcade.enable(green);
-            // game.physics.arcade.enable(yellow);
-            // game.physics.arcade.enable(pinky);
+            game.physics.arcade.enable(green);
+            game.physics.arcade.enable(yellow);
+            game.physics.arcade.enable(pinky);
 
-            blinky.scale.setTo(0.7,0.7);
-            // green.scale.setTo(0.7, 0.7);
-            // yellow.scale.setTo(0.7, 0.7);
-            // pinky.scale.setTo(0.7, 0.7);
+            blinky.scale.setTo(1,1);
+            green.scale.setTo(1, 1);
+            yellow.scale.setTo(1, 1);
+            pinky.scale.setTo(1, 1);
 
-            blinky.animations.play('blinky', 5, true);
             // green.animations.play('green', 5, true);
             // yellow.animations.play('yellow', 5, true);
             // pinky.animations.play('pinky', 5, true);
 
-            blinky.body.setSize(18.5, 18.5, 8.5, 12);
-            // green.body.setSize(22.5, 22.5, 8, 8);
-            // yellow.body.setSize(22.5, 22.5, 8, 8);
-            // pinky.body.setSize(22.5, 22.5, 8, 8);
+            blinky.body.setSize(16, 16, 8, 8);
+            green.body.setSize(16, 16, 8, 8);
+            yellow.body.setSize(16, 16, 8, 8);
+            pinky.body.setSize(16, 16, 8, 8);
             
-            blinkyInst = new pacmanGhosts(blinky, null, null);
+            // blinkyInst = new pacmanGhosts(blinky, , null);
             // greenInst = new pacmanGhosts(green, null, null);
             // yellowInst = new pacmanGhosts(yellow, null, null);
             // pinkyInst = new pacmanGhosts(pinky, null, null);
 
-            //A star (AI enemy implementation)
+
+
+                //A star (AI enemy implementation)
 
             // console.log(blinky);
 
             blinkyLocation = map.getTileWorldXY(blinky.x, blinky.y);
+            greenLocation = map.getTileWorldXY(green.x, green.y);
             pacmanLocation = map.getTileWorldXY(pacman.x, pacman.y);
+            pacmanPrevLoc = new Phaser.Point(pacman.x, pacman.y);
+            
+            //Blinky ghost
             var InitializeMap = new Map(map.layer.data);
             newMap = InitializeMap.getMap();
             var startLocation = new Phaser.Point(blinkyLocation.y, blinkyLocation.x);
             var endLocation = new Phaser.Point(pacmanLocation.y, pacmanLocation.x);
             var searchParameters = new SearchParameters(startLocation, endLocation, newMap);
             var pathFinder = new PathFinder(searchParameters);
-            paths = pathFinder.FindPath();
+            blinkyPaths = pathFinder.FindPath();
 
-            pacmanPrevX = pacman.x;
-            pacmanPrevY = pacman.y;
+            blinkyInst = new pacmanGhosts(blinky, blinkyPaths, pacmanPrevLoc);
 
-            console.log(paths);
+            // Green ghost
+            var grStartLocation = new Phaser.Point(greenLocation.y, greenLocation.x);
+            var grEndLocation = new Phaser.Point(pacmanLocation.y, pacmanLocation.x);
+            var grSearchParameters = new SearchParameters(startLocation, endLocation, newMap);
+            var grPathFinder = new PathFinder(grSearchParameters);
+            greenPaths = grPathFinder.FindPath();
+
+            greenInst = new pacmanGhosts(green, greenPaths, pacmanPrevLoc);
+
+            // Yellow ghost
+            var yeStartLocation = new Phaser.Point(greenLocation.y, greenLocation.x);
+            var yeEndLocation = new Phaser.Point(pacmanLocation.y, pacmanLocation.x);
+            var yeSearchParameters = new SearchParameters(startLocation, endLocation, newMap);
+            var yePathFinder = new PathFinder(grSearchParameters);
+            yellowPaths = yePathFinder.FindPath();
+
+            yellowInst = new pacmanGhosts(yellow, yellowPaths, pacmanPrevLoc);
+
+            // Pinky(brown) ghost
+            var piStartLocation = new Phaser.Point(greenLocation.y, greenLocation.x);
+            var piEndLocation = new Phaser.Point(pacmanLocation.y, pacmanLocation.x);
+            var piSearchParameters = new SearchParameters(startLocation, endLocation, newMap);
+            var piPathFinder = new PathFinder(grSearchParameters);
+            pinkyPaths = piPathFinder.FindPath();
+
+            pinkyInst = new pacmanGhosts(pinky, pinkyPaths, pacmanPrevLoc);
+
+            // game.physics.arcade.moveToXY(green, paths[0].y, paths[0].x);
+
+            // pacmanPrevLoc = new Phaser.Point(pacman.x, pacman.y);
+            // pacmanPrevX = pacman.x;
+            // pacmanPrevY = pacman.y;
+
             // var nodesArr = pathFinder.InitializeNodes(newMap);
             // console.log(paths);
             
@@ -389,7 +447,7 @@
             // Remove the star from the screen
             dot.kill();
 
-            score = score + 1;
+            score = score + 10;
             scoreText.text = 'Score: ' + score;
             levelText.text = 'Level: ' + level;
             // speedText.text = 'Speed: ' + speed;
@@ -406,13 +464,17 @@
             if (pacmanLife === 1) {
                 pacmanLife--;
                 pacmanLifeText.text = 'Life: ' + pacmanLife;
-                var gameOver = game.add.text((14 * 16) - 43,(17 * 16) - 50, "Game OVER!", {fontSize: '14px', fill: '#FDCC91'});  
+                var gameOver = game.add.text((14 * 16) - 43,(17 * 16) - 50, "Game OVER!", {fontSize: '14px', fill: 'black'});  
                 pacman.kill();
 
             }else{
                 pacmanLife--;
                 pacmanLifeText.text = 'Life: ' + pacmanLife;
                 pacman.reset((14 * 16) + 8,(17 * 16) + 8);
+                blinky.reset((14 * 16) + 8, (11 * 16) + 8);
+                green.reset((11.6 * 16) + 8, (14.5 * 16) + 8);
+                yellow.reset((13.6 * 16) + 8, (14.5 * 16) + 8);
+                pinky.reset((15.6 * 16) + 8, (14.5 * 16) + 8);
             }
         }
 
@@ -420,9 +482,9 @@
             // console.log(map);
             game.physics.arcade.collide(pacman, layer);
             //game.physics.arcade.collide(blinky, layer);
-            game.physics.arcade.collide(green, layer);
-            game.physics.arcade.collide(yellow, layer);
-            game.physics.arcade.collide(pinky, layer);
+            // game.physics.arcade.collide(green, layer);
+            // game.physics.arcade.collide(yellow, layer);
+            // game.physics.arcade.collide(pinky, layer);
             game.physics.arcade.overlap(pacman, dots, eatDot, null, game);
             game.physics.arcade.overlap(pacman, blinky, eatPacman, null, game);
             game.physics.arcade.overlap(pacman, green, eatPacman, null, game);
@@ -444,59 +506,106 @@
                 turn();
             }
 
+                // Code below down is fixed ghost move
 
-            blinkyLocation = map.getTileWorldXY(blinky.x, blinky.y);
             pacmanLocation = map.getTileWorldXY(pacman.x, pacman.y);
+            blinkyLocation = map.getTileWorldXY(blinky.x, blinky.y);
+            greenLocation = map.getTileWorldXY(green.x, green.y);          
+            yellowLocation = map.getTileWorldXY(yellow.x, yellow.y);          
+            pinkyLocation = map.getTileWorldXY(pinky.x, pinky.y);          
 
-            var startLocation = new Phaser.Point(blinkyLocation.y, blinkyLocation.x);
-            var endLocation = new Phaser.Point(pacmanLocation.y, pacmanLocation.x);
-            var searchParameters = new SearchParameters(startLocation, endLocation, newMap);
-            var pathFinder = new PathFinder(searchParameters);
+            var InitializeMap = new Map(map.layer.data);
+            newMap = InitializeMap.getMap();
 
-            var timeNow = game.time.time;
-            if (timeNow > timeJump) {
-                timeJump = timeNow + 1000;
-            }
-
-            var tileX = (paths[step].y * 16) + 8;
-            var tileY = (paths[step].x * 16) + 8;
-            var blinkyX = blinky.x;
-            var blinkyY = blinky.y;
-            var absX = Math.abs(tileX - blinkyX);
-            var absY = Math.abs(tileY - blinkyY);
-
-            var check = (pacman.x == pacmanPrevX) || (pacman.y == pacmanPrevY);
-            if ( check ) 
+            var grPacmanLocation;
+            console.log(pacmanLocation);
+            
+            if (pacmanLocation.x - 4 > 0)
             {
-                if ( absX < 1.0 && absY < 1.0 )
-                {
-                    if ( (paths.length - 1 > 1) && (step < paths.length - 1) ) {
-                        paths.shift();
-                        step++;
-                        if (step  == paths.length ) { step = paths.length - 1; }
-                        console.log(paths.length);
-                        console.log(step);
-                    }
-                    else
-                    {
-                        pacmanPrevX = pacman.x;
-                        pacmanPrevY = pacman.y;
-                        paths = pathFinder.FindPath();
-                        step = 0;
-                    }
-                }
+                grPacmanLocation = map.getTileWorldXY(pacman.x + 4, pacman.y);
             }
-            else 
+            else if(pacmanLocation.y + 4 < 31)
             {
-                pacmanPrevX = pacman.x;
-                pacmanPrevY = pacman.y;
-                paths = pathFinder.FindPath();
-                step = 0;
-                console.log(paths);
-
+                grPacmanLocation = map.getTileWorldXY(pacman.x, pacman.y + 4);
+            }
+            else if (pacmanLocation.x - 4 > 0)
+            {
+                grPacmanLocation = map.getTileWorldXY(pacman.x - 4, pacman.y);
+            }
+            else if (pacmanLocation.y + 4 < 28) 
+            {
+                grPacmanLocation = map.getTileWorldXY(pacman.x, pacman.y - 4);
+            }
+            else
+            {
+                grPacmanLocation =  pacmanLocation;
             }
 
-            game.physics.arcade.moveToXY(blinky, tileX, tileY);
+
+            blinkyInst.moveGhost(pacman, newMap, blinkyLocation, pacmanLocation, 120);
+
+          
+            if (score > 50) 
+            {
+                greenInst.moveGhost(pacman, newMap, greenLocation, grPacmanLocation, 80);  
+            }
+
+            if (score > 150) 
+            {
+                yellowInst.moveGhost(pacman, newMap, yellowLocation, pacmanLocation, 90);
+            }
+
+            if(score > 300)
+            {
+                pinkyInst.moveGhost(pacman, newMap, pinkyLocation, pacmanLocation, 110);
+            }
+
+
+
+
+            // var tileX = (paths[step].y * 16) + 8;
+            // var tileY = (paths[step].x * 16) + 8;
+            // var blinkyX = blinky.x;
+            // var blinkyY = blinky.y;
+            // var absX = Math.abs(tileX - blinkyX);
+            // var absY = Math.abs(tileY - blinkyY);
+
+            // var check = (pacman.x == pacmanPrevLoc.x) || (pacman.y == pacmanPrevLoc.y);
+            // if ( check ) 
+            // {
+            //     if ( absX < 1.0 && absY < 1.0 )
+            //     {
+            //         if ( (paths.length - 1 > 1) && (step < paths.length - 1) ) {
+            //             paths.shift();
+            //             // step++;
+            //             // if (step  == paths.length ) { step = paths.length - 1; }
+            //             console.log(paths.length);
+            //             console.log(step);
+            //         }
+            //         else
+            //         {
+            //             pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
+            //             // pacmanPrevX = pacman.x;
+            //             // pacmanPrevY = pacman.y;
+            //             paths = pathFinder.FindPath();
+            //             // step = 0;
+            //             // console.log("Second: " + paths);
+            //         }
+            //     }
+            // }
+            // else 
+            // {
+            //     pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
+            //     // pacmanPrevX = pacman.x;
+            //     // pacmanPrevY = pacman.y;
+            //     paths = pathFinder.FindPath();
+            //     // step = 0;
+            //     // console.log("First: " + paths);
+
+            // }
+            // calculateGhostMove(blinky, blinkyPaths);
+            // calculateGhostMove(blinky, greenPaths);
+            // game.physics.arcade.moveToXY(blinky, tileX, tileY);
 
             // var tileX = (paths[step].y * 16) + 8;
             // var tileY = (paths[step].x * 16) + 8;
@@ -569,6 +678,7 @@
             // checkDirGhost(pinky);
 
         }
+
 
         function checkDirGhost(obj) {
 
@@ -648,21 +758,25 @@
 
             if (direction === Phaser.LEFT) // Move to the left
             {
-                pacman.scale.x = -1;
+                // pacman.scale.x = -1;
+                pacman.animations.play("kinguinLeft");
                 pacman.body.velocity.x = -speed;
             }
             else if (direction === Phaser.UP) // Up
             {
-                pacman.angle = 270;
+                // pacman.angle = 270;
+                pacman.animations.play("kinguinUpDown");
                 pacman.body.velocity.y = -speed;
             }
             else if (direction === Phaser.RIGHT) // Move to the right
             {
+                pacman.animations.play("kinguinRight");
                 pacman.body.velocity.x = speed;
             }
             else if(direction === Phaser.DOWN) // Down
             {
-                pacman.angle = 90;
+                // pacman.angle = 90;
+                pacman.animations.play("kinguinUpDown");
                 pacman.body.velocity.y = speed;
             }
 
@@ -670,8 +784,8 @@
         }
 
         function render() {
-            game.debug.body(pacman);
-            game.debug.body(blinky);
+            // game.debug.body(pacman);
+            // game.debug.body(blinky);
             // game.debug.body(green);
             // game.debug.body(yellow);
             // game.debug.body(pinky);
