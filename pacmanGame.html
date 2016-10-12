@@ -40,13 +40,12 @@
 
             moveGhost(pacman, map, ghostLocation, pacmanLocation, speed) 
             {
-                console.log(pacmanLocation);
+
                 var startLocation = new Phaser.Point(ghostLocation.y, ghostLocation.x);
                 var endLocation = new Phaser.Point(pacmanLocation.y, pacmanLocation.x);
                 var searchParameters = new SearchParameters(startLocation, endLocation, map);
                 var pathFinder = new PathFinder(searchParameters);
-                // this.paths = pathFinder.FindPath();
-                // console.log(this.paths);
+
                 var tileX = (this.paths[0].y * 16) + 8;
                 var tileY = (this.paths[0].x * 16) + 8;
                 var ghostX = this.ghost.x;
@@ -90,6 +89,62 @@
                 game.physics.arcade.moveToXY(this.ghost, tileX, tileY, speed);
             }
 
+            runTime(ghostLocation, dir, speed, map, bool = false) 
+            {
+                // var bool = ghostLocation.y == dir.y && ghostLocation.x == ghostLocation.x;
+
+                var startLocation = new Phaser.Point(ghostLocation.y, ghostLocation.x);
+                var endLocation = new Phaser.Point(dir.y, dir.x);
+                var searchParameters = new SearchParameters(startLocation, endLocation, map);
+                var pathFinder = new PathFinder(searchParameters);
+
+                if (bool) 
+                {
+                    this.paths = pathFinder.FindPath();
+                    console.log("Ghost: " + ghostLocation, "Dir: " + dir, "Speed: " + speed, "True/Flase: " + bool);
+
+                }
+
+                var tileX = (this.paths[0].y * 16) + 8;
+                var tileY = (this.paths[0].x * 16) + 8;
+                var ghostX = this.ghost.x;
+                var ghostY = this.ghost.y;
+                var absX = Math.abs(tileX - ghostX);
+                var absY = Math.abs(tileY - ghostY);
+                
+
+                if (tileX < ghostX) {
+                    this.ghost.animations.play('left', 5, true);
+                }
+                else 
+                {
+                    this.ghost.animations.play('right', 5, true);
+                }
+
+                var check = ( pacman.x == this.pacmanPrevLoc.x ) || ( pacman.y == this.pacmanPrevLoc.y );
+                if ( check ) 
+                {
+                    if ( absX < 1.0 && absY < 1.0 )
+                    {
+                        if ( (this.paths.length - 1 > 1) && ( 0 < this.paths.length - 1) ) {
+                            this.paths.shift();
+                        }
+                        else
+                        {
+                            this.pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
+                            this.paths = pathFinder.FindPath();
+                        }
+                    }
+                }
+                else 
+                {
+                    this.pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
+                    this.paths = pathFinder.FindPath();
+
+                }
+                game.physics.arcade.moveToXY(this.ghost, tileX, tileY, speed);
+            }
+
         }
 
         var game = new Phaser.Game(448, 496, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
@@ -97,6 +152,7 @@
         function preload() {
             game.load.tilemap('map', 'assets/pacman-map.json', null, Phaser.Tilemap.TILED_JSON);
             game.load.image('dot', 'assets/dotRed.png');
+            game.load.image('fish', 'assets/fish.png');
             // game.load.image('tiles', 'assets/pacman-tiles.png');
             game.load.image('tiles', 'assets/map2.png');
             game.load.spritesheet('pacman', 'assets/king.png', 32, 32);
@@ -137,7 +193,8 @@
         var level = 1;
         var scoreText;
         var levelText;
-        var speedText;
+        var gameState;
+        var gameStateText;
         var pacmanLife = 3;
         var pacmanLifeText;
 
@@ -150,6 +207,13 @@
         var yellowInst;
         var pinky;
         var pinkyInst;
+
+        // Pacman Fish
+        var fishGroup;
+        var fish;
+        var fishTwo;
+        var fishThree;
+        var fishFour;
 
         var flag =  true;
 
@@ -173,7 +237,6 @@
 
             map = game.add.tilemap('map');
             map.addTilesetImage('pacman-tiles', 'tiles');
-            // console.log(map);
             layer = map.createLayer('Pacman');
             // layer.debug = 1;
 
@@ -183,6 +246,41 @@
 
             dots.setAll('x', 6, false, false, 1);
             dots.setAll('y', 6, false, false, 1);
+
+                // Fish group
+            fishGroup = game.add.group();
+            // fishGroup.enableBody = true;
+            // fishGroup.create(((1 * 16) + 8, (8 * 16) + 8, 'fish'));
+            // fishGroup.create(((26 * 16) + 8, (8 * 16) + 8, 'fish'));
+            // fishGroup.create(((1 * 16) + 8, (23 * 16) + 8, 'fish'));
+            // fishGroup.create(((26 * 16) + 8, (23 * 16) + 8, 'fish'));
+
+            // fish = game.add.physicsGroup();
+            fish = game.add.sprite((1 * 16) + 8, (8 * 16) + 8, 'fish');
+            fishTwo = game.add.sprite((26 * 16) + 8, (8 * 16) + 8, 'fish');
+            fishThree = game.add.sprite((1 * 16) + 8, (23 * 16) + 8, 'fish');
+            fishFour = game.add.sprite((26 * 16) + 8, (23 * 16) + 8, 'fish');
+
+            fishGroup.add(fish);
+            fishGroup.add(fishTwo);
+            fishGroup.add(fishThree);
+            fishGroup.add(fishFour);
+            console.log(fishGroup);
+
+            fish.anchor.set(0.5);
+            fishTwo.anchor.set(0.5);
+            fishThree.anchor.set(0.5);
+            fishFour.anchor.set(0.5);
+
+            game.physics.arcade.enable(fish);
+            game.physics.arcade.enable(fishTwo);
+            game.physics.arcade.enable(fishThree);
+            game.physics.arcade.enable(fishFour);
+
+            fish.body.setSize(16, 16, 8, 8);
+            fishTwo.body.setSize(16, 16, 8, 8);
+            fishThree.body.setSize(16, 16, 8, 8);
+            fishFour.body.setSize(16, 16, 8, 8);
 
             map.setCollisionByExclusion([safetile], true, layer);
 
@@ -200,7 +298,8 @@
 
             levelText = game.add.text(1, 165, 'Level: 1', {fontSize: '14px', fill: 'black'});
             scoreText = game.add.text(0, 185, 'Score: 0', {fontSize: '14px', fill: 'black'});
-            pacmanLifeText = game.add.text(370, 165, 'Life: 3', {fontSize: '14px', fill: 'black'});
+            pacmanLifeText = game.add.text(23.1 * 16, 10.5 * 16, 'Life: 3', {fontSize: '14px', fill: 'black'});
+            gameStateText = game.add.text(23.1 * 16, 11.5 * 16, 'RUN', {fontSize: '14px', fill: 'black'});
 
             //Ghosts settings
             blinky = game.add.sprite((14 * 16) + 8, (11 * 16) + 8, 'red');
@@ -258,7 +357,7 @@
             blinkyLocation = map.getTileWorldXY(blinky.x, blinky.y);
             greenLocation = map.getTileWorldXY(green.x, green.y);
             pacmanLocation = map.getTileWorldXY(pacman.x, pacman.y);
-            pacmanPrevLoc = new Phaser.Point(pacman.x, pacman.y);
+            // pacmanPrevLoc = new Phaser.Point(pacman.x, pacman.y);
             
             //Blinky ghost
             var InitializeMap = new Map(map.layer.data);
@@ -269,7 +368,7 @@
             var pathFinder = new PathFinder(searchParameters);
             blinkyPaths = pathFinder.FindPath();
 
-            blinkyInst = new pacmanGhosts(blinky, blinkyPaths, pacmanPrevLoc);
+            blinkyInst = new pacmanGhosts(blinky, blinkyPaths, pacmanLocation);
 
             // Green ghost
             var grStartLocation = new Phaser.Point(greenLocation.y, greenLocation.x);
@@ -278,7 +377,7 @@
             var grPathFinder = new PathFinder(grSearchParameters);
             greenPaths = grPathFinder.FindPath();
 
-            greenInst = new pacmanGhosts(green, greenPaths, pacmanPrevLoc);
+            greenInst = new pacmanGhosts(green, greenPaths, pacmanLocation);
 
             // Yellow ghost
             var yeStartLocation = new Phaser.Point(greenLocation.y, greenLocation.x);
@@ -287,7 +386,7 @@
             var yePathFinder = new PathFinder(grSearchParameters);
             yellowPaths = yePathFinder.FindPath();
 
-            yellowInst = new pacmanGhosts(yellow, yellowPaths, pacmanPrevLoc);
+            yellowInst = new pacmanGhosts(yellow, yellowPaths, pacmanLocation);
 
             // Pinky(brown) ghost
             var piStartLocation = new Phaser.Point(greenLocation.y, greenLocation.x);
@@ -296,11 +395,11 @@
             var piPathFinder = new PathFinder(grSearchParameters);
             pinkyPaths = piPathFinder.FindPath();
 
-            pinkyInst = new pacmanGhosts(pinky, pinkyPaths, pacmanPrevLoc);
+            pinkyInst = new pacmanGhosts(pinky, pinkyPaths, pacmanLocation);
 
             // game.physics.arcade.moveToXY(green, paths[0].y, paths[0].x);
 
-            // pacmanPrevLoc = new Phaser.Point(pacman.x, pacman.y);
+            pacmanPrevLoc = new Phaser.Point(pacman.x, pacman.y);
             // pacmanPrevX = pacman.x;
             // pacmanPrevY = pacman.y;
 
@@ -450,13 +549,14 @@
             score = score + 10;
             scoreText.text = 'Score: ' + score;
             levelText.text = 'Level: ' + level;
-            // speedText.text = 'Speed: ' + speed;
+            gameStateText.text = gameState;
 
             if (dots.total === 0)
             {
                 score = score + 100;
                 level = level + 1;
                 dots.callAll('revive');
+                fishGroup.callAll('revive');
             }
         }
 
@@ -478,18 +578,102 @@
             }
         }
 
+        // function checkPacmanFish() 
+        // {
+
+        // }
+
+        function eatFish (pacman, fish)
+        {
+            fish.kill();
+            score = score + 100;
+            timeJump = game.time.time + 5000; // 5sec
+        }
+
+        function eatGhost(pacman, ghost)
+        {
+            // console.log(ghost);
+            
+            var x;
+            var y;
+            var ghostLocation;
+            var dir = map.getTileWorldXY(14 * 16, 12 * 16);
+
+
+            if (ghost.key === "red") 
+            {
+                x = (14 * 16) + 8;
+                y = (11 * 16) + 8;
+
+                ghost.reset((14 * 16) + 8, (11 * 16) + 8);
+                ghostLocation = map.getTileWorldXY(x, y);
+                blinkyInst.runTime(ghostLocation, dir, 50, newMap, true);
+
+            }
+            else if(ghost.key === "green")
+            {
+                x = (11.6 * 16) + 8;
+                y = (14.5 * 16) + 8;
+
+                ghost.reset((11.6 * 16) + 8, (13.5 * 16) + 8);
+                ghostLocation = map.getTileWorldXY(x, y);
+                greenInst.runTime(ghostLocation, dir, 50, newMap, true);
+            
+            }
+            else if(ghost.key === "yellowGhost")
+            {
+                x = (13.6 * 16) + 8;
+                y = (14.5 * 16) + 8;
+
+                ghost.reset((13.6 * 16) + 8, (13.5 * 16) + 8);
+                ghostLocation = map.getTileWorldXY(x, y);
+                yellowInst.runTime(ghostLocation, dir, 50, newMap, true);
+            }
+            else
+            {
+                x = (15.6 * 16) + 8;
+                y = (14.5 * 16) + 8;
+
+                ghost.reset((15.6 * 16) + 8, (13.5 * 16) + 8);
+                ghostLocation = map.getTileWorldXY(x, y);
+                pinkyInst.runTime(pinkyLocation, dir, 50, newMap, true);
+            }
+        }
+
          function update () {
+
+            var gameTime = game.time.time;
             // console.log(map);
             game.physics.arcade.collide(pacman, layer);
-            //game.physics.arcade.collide(blinky, layer);
+            // game.physics.arcade.collide(blinky, layer);
             // game.physics.arcade.collide(green, layer);
             // game.physics.arcade.collide(yellow, layer);
             // game.physics.arcade.collide(pinky, layer);
+
+            game.physics.arcade.overlap(pacman, fish, eatFish, null, game);
+            game.physics.arcade.overlap(pacman, fishTwo, eatFish, null, game);
+            game.physics.arcade.overlap(pacman, fishThree, eatFish, null, game);
+            game.physics.arcade.overlap(pacman, fishFour, eatFish, null, game);
+
             game.physics.arcade.overlap(pacman, dots, eatDot, null, game);
-            game.physics.arcade.overlap(pacman, blinky, eatPacman, null, game);
-            game.physics.arcade.overlap(pacman, green, eatPacman, null, game);
-            game.physics.arcade.overlap(pacman, yellow, eatPacman, null, game);
-            game.physics.arcade.overlap(pacman, pinky, eatPacman, null, game);
+
+            if (gameTime > timeJump) 
+            {
+                // console.log("Game Time Collision");
+                game.physics.arcade.overlap(pacman, blinky, eatPacman, null, game);
+                game.physics.arcade.overlap(pacman, green, eatPacman, null, game);
+                game.physics.arcade.overlap(pacman, yellow, eatPacman, null, game);
+                game.physics.arcade.overlap(pacman, pinky, eatPacman, null, game);
+            }
+            else
+            {
+                // console.log("Kinguin Time Collision");
+                game.physics.arcade.overlap(pacman, blinky, eatGhost, null, game);
+                game.physics.arcade.overlap(pacman, green, eatGhost, null, game);
+                game.physics.arcade.overlap(pacman, yellow, eatGhost, null, game);
+                game.physics.arcade.overlap(pacman, pinky, eatGhost, null, game);
+            }
+
 
             marker.x = game.math.snapToFloor(Math.floor(pacman.x), gridsize) / gridsize;
             marker.y = game.math.snapToFloor(Math.floor(pacman.y), gridsize) / gridsize;
@@ -518,50 +702,95 @@
             newMap = InitializeMap.getMap();
 
             var grPacmanLocation;
-            console.log(pacmanLocation);
+            // console.log(pacmanLocation);
             
-            if (pacmanLocation.x - 4 > 0)
+            if (gameTime > timeJump)
             {
-                grPacmanLocation = map.getTileWorldXY(pacman.x + 4, pacman.y);
-            }
-            else if(pacmanLocation.y + 4 < 31)
-            {
-                grPacmanLocation = map.getTileWorldXY(pacman.x, pacman.y + 4);
-            }
-            else if (pacmanLocation.x - 4 > 0)
-            {
-                grPacmanLocation = map.getTileWorldXY(pacman.x - 4, pacman.y);
-            }
-            else if (pacmanLocation.y + 4 < 28) 
-            {
-                grPacmanLocation = map.getTileWorldXY(pacman.x, pacman.y - 4);
+                // console.log("Game Time");
+
+                gameState = "RUN";
+
+                if (pacmanLocation.x - 4 > 0)
+                {
+                    grPacmanLocation = map.getTileWorldXY(pacman.x + 4, pacman.y);
+                }
+                else if(pacmanLocation.y + 4 < 31)
+                {
+                    grPacmanLocation = map.getTileWorldXY(pacman.x, pacman.y + 4);
+                }
+                else if (pacmanLocation.x - 4 > 0)
+                {
+                    grPacmanLocation = map.getTileWorldXY(pacman.x - 4, pacman.y);
+                }
+                else if (pacmanLocation.y + 4 < 28) 
+                {
+                    grPacmanLocation = map.getTileWorldXY(pacman.x, pacman.y - 4);
+                }
+                else
+                {
+                    grPacmanLocation =  pacmanLocation;
+                }
+
+                blinkyInst.moveGhost(pacman, newMap, blinkyLocation, pacmanLocation, 120);
+              
+                if (score > 50) 
+                {
+                    greenInst.moveGhost(pacman, newMap, greenLocation, grPacmanLocation, 80);  
+                }
+
+                if (score > 150) 
+                {
+                    yellowInst.moveGhost(pacman, newMap, yellowLocation, pacmanLocation, 90);
+                }
+
+                if(score > 300)
+                {
+                    pinkyInst.moveGhost(pacman, newMap, pinkyLocation, pacmanLocation, 110);
+                }
             }
             else
             {
-                grPacmanLocation =  pacmanLocation;
+                // console.log("Kinguin Time");
+                gameState = "KINGUIN";
+                var topLeft = map.getTileWorldXY((1 * 16) + 8, (1 * 16) + 8);
+                var topRight = map.getTileWorldXY((26 * 16) + 8, (1 * 16) + 8);
+                var botLeft = map.getTileWorldXY((1 * 16) + 8, (26 * 16) + 8);
+                var botRight = map.getTileWorldXY((26 * 16) + 8, (26 * 16) + 8);
+
+                var checkBlinky = blinkyLocation.y == topRight.y && blinkyLocation.x == topRight.x;
+                var checkGreen = greenLocation.y == botLeft.y && greenLocation.x == botLeft.x;
+                var checkYellow = yellowLocation.y == topLeft.y && yellowLocation.x == topLeft.x;
+                var checkPinky = pinkyLocation.y == botRight.y && pinkyLocation.x == botRight.x;
+
+                if (checkBlinky) 
+                {
+                    topRight = pacmanLocation;
+                }
+                else if(checkGreen)
+                {
+                    botLeft = pacmanLocation;
+                }
+                else if(checkYellow)
+                {
+                    topLeft = pacmanLocation;
+                }
+                else if(checkPinky)
+                {
+                    botRight = pacmanLocation;
+                }
+
+                blinkyInst.runTime(blinkyLocation, topRight, 70, newMap);
+                greenInst.runTime(greenLocation, botLeft, 70, newMap);
+                yellowInst.runTime(yellowLocation, topLeft, 70, newMap);
+                pinkyInst.runTime(pinkyLocation, botRight, 70, newMap);
             }
 
-
-            blinkyInst.moveGhost(pacman, newMap, blinkyLocation, pacmanLocation, 120);
-
-          
-            if (score > 50) 
-            {
-                greenInst.moveGhost(pacman, newMap, greenLocation, grPacmanLocation, 80);  
-            }
-
-            if (score > 150) 
-            {
-                yellowInst.moveGhost(pacman, newMap, yellowLocation, pacmanLocation, 90);
-            }
-
-            if(score > 300)
-            {
-                pinkyInst.moveGhost(pacman, newMap, pinkyLocation, pacmanLocation, 110);
-            }
-
-
-
+            // var timeNow = game.time.time;
+            // if (timeNow > timeJump) 
+            // {
+            //     pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
+            //     timeJump = timeNow + 600;
+            // }
 
             // var tileX = (paths[step].y * 16) + 8;
             // var tileY = (paths[step].x * 16) + 8;
@@ -606,6 +835,8 @@
             // calculateGhostMove(blinky, blinkyPaths);
             // calculateGhostMove(blinky, greenPaths);
             // game.physics.arcade.moveToXY(blinky, tileX, tileY);
+
+
 
             // var tileX = (paths[step].y * 16) + 8;
             // var tileY = (paths[step].x * 16) + 8;
