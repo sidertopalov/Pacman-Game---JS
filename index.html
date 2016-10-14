@@ -107,54 +107,56 @@
 
                 if (bool) 
                 {
-                    console.log("runTime function");
                     this.paths = pathFinder.FindPath();
-                    console.log("Ghost: " + ghostLocation, "Dir: " + dir, "Speed: " + speed, "True/Flase: " + bool);
                 }
 
                 if (this.paths[0] == null) 
                 {
                     this.paths = pathFinder.FindPath();
-                }
-
-                var tileX = (this.paths[0].y * 16) + 8;
-                var tileY = (this.paths[0].x * 16) + 8;
-                var ghostX = this.ghost.x;
-                var ghostY = this.ghost.y;
-                var absX = Math.abs(tileX - ghostX);
-                var absY = Math.abs(tileY - ghostY);
-                
-
-                if (tileX < ghostX) {
-                    this.ghost.animations.play('left', 5, true);
+                    return
                 }
                 else 
                 {
-                    this.ghost.animations.play('right', 5, true);
-                }
+                    var tileX = (this.paths[0].y * 16) + 8;
+                    var tileY = (this.paths[0].x * 16) + 8;
+                    var ghostX = this.ghost.x;
+                    var ghostY = this.ghost.y;
+                    var absX = Math.abs(tileX - ghostX);
+                    var absY = Math.abs(tileY - ghostY);
+                    
 
-                var check = ( pacman.x == this.pacmanPrevLoc.x ) || ( pacman.y == this.pacmanPrevLoc.y );
-                if ( check ) 
-                {
-                    if ( absX < 1.0 && absY < 1.0 )
+                    if (tileX < ghostX) {
+                        this.ghost.animations.play('left', 5, true);
+                    }
+                    else 
                     {
-                        if ( (this.paths.length - 1 > 1) && ( 0 < this.paths.length - 1) ) {
-                            this.paths.shift();
-                        }
-                        else
+                        this.ghost.animations.play('right', 5, true);
+                    }
+
+                    var check = ( pacman.x == this.pacmanPrevLoc.x ) || ( pacman.y == this.pacmanPrevLoc.y );
+                    if ( check ) 
+                    {
+                        if ( absX < 1.0 && absY < 1.0 )
                         {
-                            this.pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
-                            this.paths = pathFinder.FindPath();
+                            if ( (this.paths.length - 1 > 1) && ( 0 < this.paths.length - 1) ) {
+                                this.paths.shift();
+                            }
+                            else
+                            {
+                                this.pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
+                                this.paths = pathFinder.FindPath();
+                            }
                         }
                     }
-                }
-                else 
-                {
-                    this.pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
-                    this.paths = pathFinder.FindPath();
+                    else 
+                    {
+                        this.pacmanPrevLoc = new Phaser.Point(pacman.x,pacman.y);
+                        this.paths = pathFinder.FindPath();
+
+                    }
+                    game.physics.arcade.moveToXY(this.ghost, tileX, tileY, speed);
 
                 }
-                game.physics.arcade.moveToXY(this.ghost, tileX, tileY, speed);
             }
 
         }
@@ -250,7 +252,6 @@
 
         function create() {
 
-            console.log(game.device);
             map = game.add.tilemap('map');
             map.addTilesetImage('pacman-tiles', 'tiles');
             layer = map.createLayer('Pacman');
@@ -281,7 +282,6 @@
             fishGroup.add(fishTwo);
             fishGroup.add(fishThree);
             fishGroup.add(fishFour);
-            console.log(fishGroup);
 
             fish.anchor.set(0.5);
             fishTwo.anchor.set(0.5);
@@ -610,7 +610,7 @@
         {
             fish.kill();
             score = score + 100;
-            timeJump = game.time.time + 5000; // 5sec
+            timeJump = game.time.time + 5000; // 5sec Kinguin Time
         }
 
         function eatGhost(pacman, ghost)
@@ -638,6 +638,7 @@
                 resetGhost(green);
                 resetGhost(yellow);
                 resetGhost(pinky);
+                // gamePause = true;
             }
         }
 
@@ -698,7 +699,7 @@
             game.paused = false;
         }
 
-        function printInfoGame() 
+        function printGameInfo() 
         {
             scoreText.text = 'Score: ' + score;
             levelText.text = 'Level: ' + level;
@@ -708,8 +709,13 @@
 
         function startGame()
         {
-            restartText.visible = false;
+            // if (level <= 1) 
+            // {
+            //     score = 0;    
+            // }
+
             score = 0;
+            restartText.visible = false;
             pacmanLife = 3;
             gameState = "RUN";
 
@@ -724,7 +730,7 @@
             resetGhost(pinky);
 
             // Reset Kinguin
-            pacman.reset((14 * 16) + 8,(17 * 16) + 8);
+            // pacman.reset((14 * 16) + 8,(17 * 16) + 8);
             pacman.play('kinguinLeft');
             moveKinguin(Phaser.LEFT);
             gamePause = false;
@@ -741,7 +747,7 @@
             {
                 pacman.play("kinguinUpDown");
                 restartText = game.add.text((11 * 16) + 4, (13 * 16), "Click to start", {fontSize: '14px', fill: 'blue'});
-
+                pacman.reset((14 * 16) + 8,(17 * 16) + 8);
                 game.paused = true;
                 game.input.onTap.addOnce(startGame, game);
             }
@@ -777,6 +783,7 @@
                 game.physics.arcade.overlap(pacman, green, eatGhost, null, game);
                 game.physics.arcade.overlap(pacman, yellow, eatGhost, null, game);
                 game.physics.arcade.overlap(pacman, pinky, eatGhost, null, game);
+
             }
 
 
@@ -857,9 +864,9 @@
                 gameState = "KINGUIN";
 
                 var topLeft = map.getTileWorldXY((1 * 16) + 8, (1 * 16) + 8);
-                var topRight = map.getTileWorldXY((26 * 16) + 8, (1 * 16) + 8);
-                var botLeft = map.getTileWorldXY((1 * 16) + 8, (26 * 16) + 8);
-                var botRight = map.getTileWorldXY((26 * 16) + 8, (26 * 16) + 8);
+                var topRight = map.getTileWorldXY((24 * 16) + 8, (1 * 16) + 8);
+                var botLeft = map.getTileWorldXY((4 * 16) + 8, (26 * 16) + 8);
+                var botRight = map.getTileWorldXY((24 * 16) + 8, (26 * 16) + 8);
 
                 var checkBlinky = blinkyLocation.y == topRight.y && blinkyLocation.x == topRight.x;
                 var checkGreen = greenLocation.y == botLeft.y && greenLocation.x == botLeft.x;
@@ -885,13 +892,25 @@
                 }
 
                 blinkyInst.runTime(blinkyLocation, topRight, 70, newMap);
-                greenInst.runTime(greenLocation, botLeft, 70, newMap);
-                yellowInst.runTime(yellowLocation, topLeft, 70, newMap);
-                pinkyInst.runTime(pinkyLocation, botRight, 70, newMap);
+
+                if (score > 50) 
+                {
+                    greenInst.runTime(greenLocation, botLeft, 70, newMap); 
+                }
+
+                if (score > 150) 
+                {
+                    yellowInst.runTime(yellowLocation, topLeft, 70, newMap);
+                }
+
+                if(score > 300)
+                {
+                    pinkyInst.runTime(pinkyLocation, botRight, 70, newMap);
+                }
             }
 
             // Game info
-            printInfoGame();
+            printGameInfo();
 
             // var timeNow = game.time.time;
             // if (timeNow > timeJump) 
