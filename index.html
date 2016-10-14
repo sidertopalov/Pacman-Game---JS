@@ -14,8 +14,8 @@
             margin: 0;
             padding: 0;
             background-color: #000;
-            /*background: url("http://www.3dhdwallpapers.com/image.php?width=700&height=700&cropratio=2:1&image=/wallpapers/171120153/abstract-hacker-wallpaper-images.jpg") no-repeat;
-            background-size: cover;*/
+            background: url("http://bgfons.com/upload/ice_texture2978.jpg") no-repeat;
+            background-size: cover;
         }
     </style>
     </head>
@@ -107,9 +107,14 @@
 
                 if (bool) 
                 {
+                    console.log("runTime function");
                     this.paths = pathFinder.FindPath();
                     console.log("Ghost: " + ghostLocation, "Dir: " + dir, "Speed: " + speed, "True/Flase: " + bool);
+                }
 
+                if (this.paths[0] == null) 
+                {
+                    this.paths = pathFinder.FindPath();
                 }
 
                 var tileX = (this.paths[0].y * 16) + 8;
@@ -154,14 +159,14 @@
 
         }
 
-        var game = new Phaser.Game(448, 496, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
+        var game = new Phaser.Game(448, 496, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render }, true);
 
         function preload() {
             game.load.tilemap('map', 'assets/pacman-map.json', null, Phaser.Tilemap.TILED_JSON);
             game.load.image('dot', 'assets/dotRed.png');
             game.load.image('fish', 'assets/fish.png');
-            // game.load.image('tiles', 'assets/pacman-tiles.png');
-            game.load.image('tiles', 'assets/map2.png');
+            game.load.image('background', 'assets/background.jpg');
+            game.load.image('tiles', 'assets/map.png');
             game.load.spritesheet('pacman', 'assets/king.png', 32, 32);
             game.load.spritesheet('red', 'assets/redSeal.png', 32, 32);
             game.load.spritesheet('green', 'assets/greenSeal.png', 32, 32);
@@ -202,6 +207,8 @@
         var levelText;
         var gameState = "RUN";
         var gameStateText;
+        var gameOver;
+        var restartGame;
         var pacmanLife = 3;
         var pacmanLifeText;
 
@@ -239,10 +246,11 @@
         var pacmanPrevY;
 
         var timeJump = 0;
-        var gamePause = 0;
+        var gamePause = true;
 
         function create() {
 
+            console.log(game.device);
             map = game.add.tilemap('map');
             map.addTilesetImage('pacman-tiles', 'tiles');
             layer = map.createLayer('Pacman');
@@ -488,9 +496,10 @@
 
             // get cordination on pacman(x,y) for tilemap
             // var currentLoc = map.getTileWorldXY(pacman.body.x,pacman.body.y);
+         
+            pacman.play('kinguinLeft');
+            moveKinguin(Phaser.LEFT);
 
-            pacman.play('munch');
-            movePacman(Phaser.LEFT);
 
         }
             
@@ -533,7 +542,7 @@
              //  Check if they want to turn around and can
             if (current === opposites[turnTo]) 
             {
-                movePacman(turnTo);
+                moveKinguin(turnTo);
             }
             else
             {
@@ -544,21 +553,7 @@
             }
         }
 
-        function eatDot (pacman,dot) {
-            // Remove the star from the screen
-            dot.kill();
-
-            score = score + 10;
-
-            if (dots.total === 0)
-            {
-                score = score + 500;
-                level = level + 1;
-                pacmanLife = 3;
-                dots.callAll('revive');
-                fishGroup.callAll('revive');
-            }
-        }
+       
 
         function resetGhost(ghost)
         {
@@ -566,7 +561,7 @@
             var y;
             var ghostLocation;
             var dir = map.getTileWorldXY(14 * 16, 12 * 16);
-
+            
             if (ghost.key === "red") 
             {
                 x = (14 * 16) + 8;
@@ -611,39 +606,6 @@
             }
         }
 
-
-
-        function eatPacman (pacman,ghost) {
-            if (pacmanLife === 1) {
-
-                pacmanLife--;
-                var gameOver = game.add.text((14 * 16) - 43,(17 * 16) - 50, "Game OVER!", {fontSize: '14px', fill: 'black'});  
-                pacman.kill();
-
-            }else{
-
-                pacmanLife--;
-                pacman.reset((14 * 16) + 8,(17 * 16) + 8);
-                // blinky.reset((14 * 16) + 8, (11 * 16) + 8); 
-                // green.reset((11.6 * 16) + 8, (14.5 * 16) + 8);
-                // yellow.reset((13.6 * 16) + 8, (14.5 * 16) + 8);
-                // pinky.reset((15.6 * 16) + 8, (14.5 * 16) + 8);
-
-                resetGhost(blinky);
-                resetGhost(green);
-                resetGhost(yellow);
-                resetGhost(pinky);
-            }
-        }
-
-        function printInfoGame() 
-        {
-            scoreText.text = 'Score: ' + score;
-            levelText.text = 'Level: ' + level;
-            pacmanLifeText.text = 'Life: ' + pacmanLife;
-            gameStateText.text = gameState;
-        }
-
         function eatFish (pacman, fish)
         {
             fish.kill();
@@ -656,11 +618,136 @@
             score = score + 250;
             resetGhost(ghost);
         }
+
+        function eatDot (pacman,dot) {
+            // Remove the star from the screen
+            dot.kill();
+
+            score = score + 10;
+
+            if (dots.total === 0)
+            {
+                score = score + 500;
+                level = level + 1;
+                pacmanLife = 3;
+
+                dots.callAll('revive');
+                fishGroup.callAll('revive');
+
+                resetGhost(blinky);
+                resetGhost(green);
+                resetGhost(yellow);
+                resetGhost(pinky);
+            }
+        }
+
+        function eatPacman (pacman,ghost) {
+            if (pacmanLife === 1) 
+            {
+                pacman.kill();
+                blinky.kill();
+                green.kill();
+                yellow.kill();
+                pinky.kill();
+
+                gameOver = game.add.text((11 * 16) - 7, (13 * 16), " Game OVER!", {fontSize: '16px', fill: 'black'});  
+                restartText = game.add.text((11 * 16) - 2, (17 * 16), "Click to restart", {fontSize: '14px', fill: 'blue'});
+
+                game.paused = true;
+                game.input.onTap.addOnce(restartGame, game);
+
+            } else {
+
+                pacmanLife--;
+                pacman.reset((14 * 16) + 8,(17 * 16) + 8);
+                pacman.play('kinguinLeft');
+                moveKinguin(Phaser.LEFT);
+                
+                resetGhost(blinky);
+                resetGhost(green);
+                resetGhost(yellow);
+                resetGhost(pinky);
+            }
+        }
+
+        function restartGame()
+        {
+            gameOver.visible = false;
+            restartText.visible = false;
+            
+            // Set started score, life and gameState
+            score = 0;
+            pacmanLife = 3;
+            gameState = "RUN";
+
+            // Revive dots and fishes
+            dots.callAll('revive');
+            fishGroup.callAll('revive');
+
+            // Reset Seals
+            resetGhost(blinky);
+            resetGhost(green);
+            resetGhost(yellow);
+            resetGhost(pinky);
+
+            // Reset Kinguin
+            pacman.reset((14 * 16) + 8,(17 * 16) + 8);
+            pacman.play('kinguinLeft');
+            moveKinguin(Phaser.LEFT);
+
+            game.paused = false;
+        }
+
+        function printInfoGame() 
+        {
+            scoreText.text = 'Score: ' + score;
+            levelText.text = 'Level: ' + level;
+            pacmanLifeText.text = 'Life: ' + pacmanLife;
+            gameStateText.text = gameState;
+        }
+
+        function startGame()
+        {
+            restartText.visible = false;
+            score = 0;
+            pacmanLife = 3;
+            gameState = "RUN";
+
+            // Revive dots and fishes
+            dots.callAll('revive');
+            fishGroup.callAll('revive');
+
+            // Reset Seals
+            resetGhost(blinky);
+            resetGhost(green);
+            resetGhost(yellow);
+            resetGhost(pinky);
+
+            // Reset Kinguin
+            pacman.reset((14 * 16) + 8,(17 * 16) + 8);
+            pacman.play('kinguinLeft');
+            moveKinguin(Phaser.LEFT);
+            gamePause = false;
+            game.paused = false;
+        }
+       
  
          function update () {
 
             var gameTime = game.time.time;
 
+            // Start game state
+            if (gamePause) 
+            {
+                pacman.play("kinguinUpDown");
+                restartText = game.add.text((11 * 16) + 4, (13 * 16), "Click to start", {fontSize: '14px', fill: 'blue'});
+
+                game.paused = true;
+                game.input.onTap.addOnce(startGame, game);
+            }
+
+
+            // Check collisions
             game.physics.arcade.collide(pacman, layer);
             // game.physics.arcade.collide(blinky, layer);
             // game.physics.arcade.collide(green, layer);
@@ -674,9 +761,10 @@
 
             game.physics.arcade.overlap(pacman, dots, eatDot, null, game);
 
+            // 
             if (gameTime > timeJump) 
             {
-                // console.log("Game Time Collision");
+                // Game Time Collision - Seals can eat kinguin
                 game.physics.arcade.overlap(pacman, blinky, eatPacman, null, game);
                 game.physics.arcade.overlap(pacman, green, eatPacman, null, game);
                 game.physics.arcade.overlap(pacman, yellow, eatPacman, null, game);
@@ -684,7 +772,7 @@
             }
             else
             {
-                // console.log("Kinguin Time Collision");
+                // Kinguin Time Collision - Kinguin can eat seals
                 game.physics.arcade.overlap(pacman, blinky, eatGhost, null, game);
                 game.physics.arcade.overlap(pacman, green, eatGhost, null, game);
                 game.physics.arcade.overlap(pacman, yellow, eatGhost, null, game);
@@ -719,12 +807,10 @@
             newMap = InitializeMap.getMap();
 
             var grPacmanLocation;
-            // console.log(pacmanLocation);
             
             if (gameTime > timeJump)
             {
-                // console.log("Game Time");
-
+                // Normal state time - Seals trying to catch kinguin
                 gameState = "RUN";
 
                 if (pacmanLocation.x - 4 > 0)
@@ -767,8 +853,9 @@
             }
             else
             {
-                // console.log("Kinguin Time");
+                // Kinguin state time - Seals run away from kinguin
                 gameState = "KINGUIN";
+
                 var topLeft = map.getTileWorldXY((1 * 16) + 8, (1 * 16) + 8);
                 var topRight = map.getTileWorldXY((26 * 16) + 8, (1 * 16) + 8);
                 var botLeft = map.getTileWorldXY((1 * 16) + 8, (26 * 16) + 8);
@@ -779,6 +866,7 @@
                 var checkYellow = yellowLocation.y == topLeft.y && yellowLocation.x == topLeft.x;
                 var checkPinky = pinkyLocation.y == botRight.y && pinkyLocation.x == botRight.x;
 
+                // Calculate directory for each seal
                 if (checkBlinky) 
                 {
                     topRight = pacmanLocation;
@@ -802,6 +890,7 @@
                 pinkyInst.runTime(pinkyLocation, botRight, 70, newMap);
             }
 
+            // Game info
             printInfoGame();
 
             // var timeNow = game.time.time;
@@ -991,7 +1080,7 @@
 
             pacman.body.reset(turnPoint.x, turnPoint.y);
 
-            movePacman(turning);
+            moveKinguin(turning);
 
             turning = Phaser.NONE;
 
@@ -999,7 +1088,7 @@
 
         }
 
-        function movePacman(direction) {
+        function moveKinguin(direction) {
 
             pacman.scale.x = 1;
             pacman.angle = 0;
