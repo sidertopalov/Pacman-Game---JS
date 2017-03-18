@@ -1,0 +1,56 @@
+<?php
+include "data.php";
+?>
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Pacman</title>
+        <link rel="stylesheet" href="library/css/bootstrap.min.css">
+        <script src="library/js/phaser.min.js"></script>
+        <script src="library/js/jquery.min.js"></script>
+        <script src="library/js/bootstrap.min.js"></script>
+        <script src="AStar/map.js"></script>
+        <script src="AStar/Node.js"></script>
+        <script src="AStar/NodeState.js"></script>
+        <script src="AStar/SearchParameters.js"></script>
+        <script src="AStar/PathFinder.js"></script>
+        <script type="text/javascript" src="pacman.js"></script>
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: #000;
+                background: url("http://bgfons.com/upload/ice_texture2978.jpg") no-repeat;
+                background-size: cover;
+            }
+
+            canvas {
+                margin-left: 0;
+                margin-right: 0;
+            }
+        </style>
+    </head>
+    <body>
+
+    <div class="container"> 
+
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Menu
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <a style="font-size: 20px;" href="index.html"><i class="fa fa-play fa-lg"></i>Home</a>
+                </li>
+                <li>
+                    <a style="font-size: 20px;" href="dashboard.php"><i class="fa fa-play fa-lg"></i>Check our dashboard!</a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+
+    </body>
+</html>
