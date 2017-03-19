@@ -39,7 +39,7 @@ class Db
 		return "create";
 	}
 
-	public function highesPlayerScores(int $limit = 5)
+	public function highesPlayerScores(int $limit = 10)
 	{
 		$sql = "SELECT * FROM dashboard ORDER BY score DESC LIMIT $limit";
 		$data = $this->con->query($sql);

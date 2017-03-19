@@ -1,3 +1,3 @@
-# Pacman-Game---JS
+# Pacman Game - Winter edition
 
 Javascript "Pacman Game".

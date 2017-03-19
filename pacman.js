@@ -1,5 +1,5 @@
-window.onload = function() {
-
+// window.onload = function() {
+// $(window).on('load', function() {
     //  Note that this html file is set to pull down Phaser 2.5.0 from the JS Delivr CDN.
     //  Although it will work fine with this tutorial, it's almost certainly not the most current version.
     //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
@@ -144,7 +144,7 @@ window.onload = function() {
         game.load.image('dot', 'assets/dotRed.png');
         game.load.image('fish', 'assets/fish.png');
         game.load.image('background', 'assets/background.jpg');
-        // game.load.image('tiles', 'assets/map.png');
+        game.load.image('tiles', 'assets/map.png');
         game.load.spritesheet('pacman', 'assets/king.png', 32, 32);
         game.load.spritesheet('red', 'assets/redSeal.png', 32, 32);
         game.load.spritesheet('green', 'assets/greenSeal.png', 32, 32);
@@ -243,7 +243,7 @@ window.onload = function() {
             // Fish group
         fishGroup = game.add.group();
 
-        // Position fishes
+        // fish = game.add.physicsGroup();
         fish = game.add.sprite((1 * 16) + 8, (8 * 16) + 8, 'fish');
         fishTwo = game.add.sprite((26 * 16) + 8, (8 * 16) + 8, 'fish');
         fishThree = game.add.sprite((1 * 16) + 8, (23 * 16) + 8, 'fish');
@@ -342,7 +342,6 @@ window.onload = function() {
         // pinkyInst = new pacmanGhosts(pinky, null, null);
 
 
-
             //A star (AI enemy implementation)
 
         // console.log(blinky);
@@ -390,7 +389,7 @@ window.onload = function() {
         pinkyInst = new pacmanGhosts(pinky, pinkyPaths, pacmanLocation);
 
         pacmanPrevLoc = new Phaser.Point(pacman.x, pacman.y);
-
+     
         pacman.play('kinguinLeft');
         moveKinguin(Phaser.LEFT);
 
@@ -536,35 +535,57 @@ window.onload = function() {
 
     function saveStats() {
 
-        var myData = {
-            'score': score,
-            'playerName': getPlayerName(),
-        };
+        // Having problem with multiple-request
+        var modal = $('#myModal');
+        modal.find("#score").val(score);
+        modal.modal('toggle');
 
-        $.ajax({
-            url: 'save_stats.php',
-            type: 'POST',
-            data: myData,
-            success: function(data)
-            {
-                $myData = JSON.parse(data);
+        $("#formModal").submit(function(e){
 
-                if (myData['err'] == false) 
-                {
-                    alert($myData['msg']);
+            $.ajax({ //make ajax request
+                type: 'POST',
+                url: 'save_stats.php',
+                cache: false,
+                data: $("#formModal").serialize(),
+                success: function(data) { //on Ajax success
+                    console.log(data);
+                    // alert(data.msg);
+                    modal.modal('hide');
+                    $("#playerName").val("");
                 }
-                else
-                {
-                    alert($myData['msg']);
-                }
-            }
-        })
+            });
+
+            e.preventDefault();
+        });
+
+        // var myData = {
+        //     'score': score,
+        //     'playerName': getPlayerName(),
+        // };
+
+        // $.ajax({
+        //     url: 'save_stats.php',
+        //     type: 'POST',
+        //     data: myData,
+        //     success: function(data)
+        //     {
+        //         $myData = JSON.parse(data);
+        //         if (myData['err'] == false) 
+        //         {
+        //             alert($myData['msg']);
+        //         }
+        //         else
+        //         {
+        //             alert($myData['msg']);
+        //         }
+        //     }
+        // })
         // .done(function () {
         //     console.log('done ');
         // })
-        .fail(function () {
-            alert('We are currently offline! Coming back soon. Thank you!');
-        });
+        // .fail(function () {
+        //     console.log('failed');
+        // });
     }
 
     function getPlayerName(){
@@ -577,7 +598,7 @@ window.onload = function() {
     function eatPacman (pacman,ghost) {
         if (pacmanLife === 1) 
         {
-            // send data(playerName and playerScore) to php file
+            // send data to php file (PlayerName and Score)
             saveStats();
 
             pacman.kill();
@@ -644,6 +665,7 @@ window.onload = function() {
 
     function startGame()
     {
+
         score = 0;
         restartText.visible = false;
         pacmanLife = 3;
@@ -685,10 +707,6 @@ window.onload = function() {
 
         // Check collisions
         game.physics.arcade.collide(pacman, layer);
-        // game.physics.arcade.collide(blinky, layer);
-        // game.physics.arcade.collide(green, layer);
-        // game.physics.arcade.collide(yellow, layer);
-        // game.physics.arcade.collide(pinky, layer);
 
         game.physics.arcade.overlap(pacman, fish, eatFish, null, game);
         game.physics.arcade.overlap(pacman, fishTwo, eatFish, null, game);
@@ -841,7 +859,6 @@ window.onload = function() {
 
         // Game info
         printGameInfo();
-
     }
 
 
@@ -955,4 +972,5 @@ window.onload = function() {
         // game.debug.body(yellow);
         // game.debug.body(pinky);
     }
-};
+// });
+// };

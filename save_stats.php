@@ -4,13 +4,12 @@
  * Validate and save data to database
  */
 
-include_once "db_conn.php";
+require_once "db_conn.php";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 	header("Location: http://localhost/workspace/Pacman-Game-JS/");
 	die();
 }
-
 
 $name = htmlspecialchars($_POST['playerName']);
 $score = (int)$_POST['score'];
