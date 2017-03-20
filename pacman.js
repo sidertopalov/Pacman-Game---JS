@@ -520,7 +520,7 @@
         {
             score = score + 500;
             level = level + 1;
-            pacmanLife = 3;
+            // pacmanLife = 3;
 
             dots.callAll('revive');
             fishGroup.callAll('revive');
@@ -530,6 +530,7 @@
             resetGhost(yellow);
             resetGhost(pinky);
             // gamePause = true;
+            alert("Congratulations! You complete the level and win 500 bonus score! Are you ready for next level?");
         }
     }
 
@@ -540,22 +541,25 @@
         modal.find("#score").val(score);
         modal.modal('toggle');
 
-        $("#formModal").submit(function(e){
+        $("#formModal").off().on("submit", function(e){
 
+            e.preventDefault();
+            
             $.ajax({ //make ajax request
                 type: 'POST',
                 url: 'save_stats.php',
                 cache: false,
                 data: $("#formModal").serialize(),
                 success: function(data) { //on Ajax success
-                    console.log(data);
-                    // alert(data.msg);
+                    $myData = JSON.parse(data);
+
+                    //TODO implement to show response
+                    alert($myData['msg']);
                     modal.modal('hide');
                     $("#playerName").val("");
                 }
             });
 
-            e.preventDefault();
         });
 
         // var myData = {

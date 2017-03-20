@@ -14,16 +14,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $name = htmlspecialchars($_POST['playerName']);
 $score = (int)$_POST['score'];
 
+// Remove spaces
 $playerName = trim($name);
 $playerScore = trim($score);
 
+// regex pattern only numbers, letters, "-" and "_"
+$reg = '/^[a-zA-Z0-9_-]+$/';
+preg_match_all($reg, $playerName, $matches, PREG_PATTERN_ORDER);
+
+$result = isset($matches[0][0]) ? $matches[0][0] : "";
+
 $data = [
 	'err' => false,
-	'msg' => "You need to write your nickname if you want to play for our dashboard",
-	'score' => $score,
+	'msg' => "You need to write your nickname and collect more that 0 score if you want to play for our dashboard",
+	'score' => $playerScore,
 ];
 
-if (!empty($playerName)) {
+if (!empty($playerName) && $result === $playerName && $playerScore > 0 ) {
 	
 	$db = new Db();
 	$con = $db->getCon();
@@ -34,7 +41,7 @@ if (!empty($playerName)) {
 	$msg = "";
 	switch ($stmt) {
 		case 'create':
-				$sql = "INSERT INTO dashboard (username,score) VALUES('".$playerName."', '".$playerScore."')";
+				$sql = "INSERT INTO dashboard (username,score) VALUES('$playerName', $playerScore)";
 				$msg = "Data saved succesfully";
 			break;
 		
