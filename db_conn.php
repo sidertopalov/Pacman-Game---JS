@@ -52,6 +52,19 @@ class Db
 		return $result;
 	}
 
+	public function getAllPlayers()
+	{
+		$sql = "SELECT * FROM dashboard";
+		$data = $this->con->query($sql);
+		$result = [];
+		
+		while($row = $data->fetch_row()) {
+		  	$result[]=$row;
+		}
+
+		return $result;
+	}
+
 	public function save($sql)
 	{
 		if (!empty($sql)) {

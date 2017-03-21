@@ -46,7 +46,7 @@ include_once "db_conn.php";
                     <div class="row text-center">
                         <b>Top 10 best players</b>
                     </div>
-                
+
                     <table class="table table-responsive">
                         <table class="table table-sm table-inverse">
                             <thead>
@@ -61,7 +61,8 @@ include_once "db_conn.php";
 
                                 $model = new Db();
                                 $highesScores = $model->highesPlayerScores();
-                                $overAll = count($highesScores);
+                                $allPlayers = $model->getAllPlayers();
+                                $overAll = count($allPlayers);
                                 $place = 1;
                                 foreach ($highesScores as $playerStats) {
                                     $playerName = $playerStats[0];

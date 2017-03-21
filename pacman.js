@@ -7,10 +7,11 @@
 
     class pacmanGhosts {
 
-        constructor (ghost, paths, pacmanPrevLoc) {
+        constructor (ghost, paths, pacmanPrevLoc, delay = 0) {
             this.ghost = ghost;
             this.paths = paths;
             this.pacmanPrevLoc = pacmanPrevLoc;
+            this.delay = delay;
         }
 
         moveGhost(pacman, map, ghostLocation, pacmanLocation, speed) 
@@ -74,6 +75,7 @@
         runTime(ghostLocation, dir, speed, map, bool = false) 
         {
             // var bool = ghostLocation.y == dir.y && ghostLocation.x == ghostLocation.x;
+   
 
             var startLocation = new Phaser.Point(ghostLocation.y, ghostLocation.x);
             var endLocation = new Phaser.Point(dir.y, dir.x);
@@ -453,7 +455,7 @@
         var ghostLocation;
         var dir = map.getTileWorldXY(14 * 16, 12 * 16);
         
-        if (ghost.key === "red") 
+        if (ghost.key === "red")
         {
             x = (14 * 16) + 8;
             y = (11 * 16) + 8;
@@ -473,6 +475,15 @@
             ghostLocation = map.getTileWorldXY(x, y);
             greenInst.runTime(ghostLocation, dir, 0, newMap, true);
             green.animations.play('left');
+
+            // if (!isDead) {
+            //     console.log("isDead = true")
+            //     green.animations.play('left');
+            // }
+            // else{
+            //     console.log("Delay: " + green.delay);
+            //     greenInst.delay = game.time.time + 2000; // 2sec delay
+            // }
         
         }
         else if(ghost.key === "yellowGhost")
@@ -484,6 +495,15 @@
             ghostLocation = map.getTileWorldXY(x, y);
             yellowInst.runTime(ghostLocation, dir, 0, newMap, true);
             yellow.animations.play('left');
+
+            // if (!isDead) {
+            //     console.log("isDead = true")
+            //     yellow.animations.play('left');
+            // }
+            // else{
+            //     console.log("Delay: " + yellowInst.delay);
+            //     yellowInst.delay = game.time.time + 2000; // 2sec delay
+            // }
         }
         else
         {
@@ -494,6 +514,17 @@
             ghostLocation = map.getTileWorldXY(x, y);
             pinkyInst.runTime(pinkyLocation, dir, 0, newMap, true);
             pinky.animations.play('left');
+
+            // if (isDead) {
+                // console.log("isDead = true")
+                // yellow.animations.play('left');
+            //     pinkyInst.delay = game.time.time + 2000; // 2sec delay
+
+            // }
+            // else{
+            //     console.log("Delay: " + yellowInst.delay);
+            //     yellowInst.delay = game.time.time + 2000; // 2sec delay
+            // }
         }
     }
 
@@ -507,7 +538,7 @@
     function eatGhost(pacman, ghost)
     {
         score = score + 250;
-        resetGhost(ghost);
+        resetGhost(ghost, true);
     }
 
     function eatDot (pacman,dot) {
@@ -529,6 +560,10 @@
             resetGhost(green);
             resetGhost(yellow);
             resetGhost(pinky);
+            pacman.reset((14 * 16) + 8,(17 * 16) + 8);
+            pacman.play('kinguinLeft');
+            moveKinguin(Phaser.LEFT);
+
             // gamePause = true;
             alert("Congratulations! You complete the level and win 500 bonus score! Are you ready for next level?");
         }
@@ -623,7 +658,7 @@
             pacman.reset((14 * 16) + 8,(17 * 16) + 8);
             pacman.play('kinguinLeft');
             moveKinguin(Phaser.LEFT);
-            
+
             resetGhost(blinky);
             resetGhost(green);
             resetGhost(yellow);
